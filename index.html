@@ -1,0 +1,601 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Nearest Neighbours | Machine Learning Blog</title>
+
+<style>
+:root {
+  --purple: #9270d8;
+  --dark: #39285f;
+  --light: #f1ebff;
+  --text: #514866;
+  --border: #e4dcf5;
+  --white: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #faf9ff;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+header {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  color: var(--purple);
+  font-size: 20px;
+  font-weight: bold;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--dark);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+nav a:hover { color: var(--purple); }
+
+.hero {
+  background: linear-gradient(135deg, #eee6ff, #ffffff, #f8f5ff);
+  padding: 65px 8%;
+  border-bottom: 1px solid var(--border);
+}
+
+.tag {
+  color: var(--purple);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+}
+
+.hero h1 {
+  color: var(--dark);
+  font-size: clamp(34px, 5vw, 55px);
+  line-height: 1.15;
+  margin: 15px 0;
+}
+
+.hero p {
+  max-width: 720px;
+  font-size: 18px;
+}
+
+.button {
+  display: inline-block;
+  background: var(--purple);
+  color: white;
+  padding: 11px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.button:hover,
+.copy-btn:hover {
+  background: #7653bd;
+}
+
+.container {
+  max-width: 1050px;
+  margin: auto;
+  padding: 30px 20px;
+}
+
+section {
+  background: white;
+  margin-bottom: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  scroll-margin-top: 20px;
+}
+
+h2 {
+  color: var(--dark);
+  margin-top: 0;
+  border-bottom: 2px solid var(--light);
+  padding-bottom: 10px;
+}
+
+h3 { color: var(--purple); }
+
+.number {
+  color: var(--purple);
+  margin-right: 8px;
+}
+
+.note {
+  background: #f5f0ff;
+  border-left: 4px solid var(--purple);
+  padding: 14px 18px;
+  border-radius: 5px;
+  margin: 18px 0;
+}
+
+.formula {
+  background: #faf8ff;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--dark);
+  font-size: 19px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 10px;
+  text-align: center;
+}
+
+th {
+  background: var(--light);
+  color: var(--dark);
+}
+
+.codebox {
+  background: #211936;
+  color: #f2ecff;
+  padding: 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.copy-btn {
+  background: var(--purple);
+  color: white;
+  border: 0;
+  border-radius: 5px;
+  padding: 9px 14px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+.graph {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.metric {
+  background: var(--light);
+  padding: 18px;
+  border-radius: 8px;
+}
+
+.metric strong {
+  display: block;
+  color: var(--purple);
+  font-size: 19px;
+}
+
+footer {
+  background: var(--dark);
+  color: white;
+  text-align: center;
+  padding: 28px 15px;
+}
+
+footer a { color: #d8c7ff; }
+
+a { color: #7653bd; }
+
+@media (max-width: 600px) {
+  header { padding: 15px 5%; }
+  nav { gap: 10px; }
+  .hero { padding: 45px 6%; }
+  section { padding: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">ML Learning Journal</div>
+  <nav>
+    <a href="#intro">Introduction</a>
+    <a href="#method">Working</a>
+    <a href="#formula">Formula</a>
+    <a href="#python">Python</a>
+    <a href="#graphs">Graphs</a>
+    <a href="#applications">Applications</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="tag">Machine Learning • Supervised Learning</div>
+  <h1>K-Nearest Neighbours</h1>
+  <p>
+    Discover how machines classify data by finding the nearest
+    examples. Learn the mathematical formula, understand the
+    algorithm, run simple Python code and explore real-world uses.
+  </p>
+  <a class="button" href="#intro">Start Learning ↓</a>
+</div>
+
+<main class="container">
+
+<section id="intro">
+  <h2><span class="number">01.</span> Introduction</h2>
+  <p>
+    K-Nearest Neighbours (KNN) is a supervised machine learning
+    algorithm used for classification and regression. It predicts
+    an outcome by examining the closest data points in a dataset.
+  </p>
+  <p>
+    For example, a system can classify a fruit as an apple or an
+    orange using features such as weight and sweetness.
+  </p>
+  <div class="note">
+    <strong>Key idea:</strong> Similar data points are expected to
+    have similar outcomes. KNN uses nearby examples to make a prediction.
+  </div>
+</section>
+
+<section id="method">
+  <h2><span class="number">02.</span> Description and Working</h2>
+
+  <h3>How does KNN work?</h3>
+  <ol>
+    <li>Collect a dataset containing features and known labels.</li>
+    <li>Choose K, the number of neighbours to consider.</li>
+    <li>Calculate the distance from the new data point to the training points.</li>
+    <li>Select the K closest neighbours.</li>
+    <li>For classification, choose the most common class among those neighbours.</li>
+  </ol>
+
+  <div class="note">
+    <strong>Example:</strong> If K = 3 and two of the three nearest
+    neighbours are apples, the model predicts an apple.
+  </div>
+
+  <h3>Classification vs. Regression</h3>
+  <table>
+    <tr><th>KNN Classification</th><th>KNN Regression</th></tr>
+    <tr><td>Predicts a category</td><td>Predicts a numerical value</td></tr>
+    <tr><td>Example: fruit type</td><td>Example: house price</td></tr>
+    <tr><td>Uses majority voting</td><td>Often averages neighbours' values</td></tr>
+  </table>
+</section>
+
+<section id="formula">
+  <h2><span class="number">03.</span> Mathematical Formula</h2>
+
+  <h3>Euclidean Distance</h3>
+  <p>
+    KNN commonly uses Euclidean distance to measure the distance
+    between two data points.
+  </p>
+
+  <div class="formula">
+    d = √[(x₂ − x₁)² + (y₂ − y₁)²]
+  </div>
+
+  <p>Where:</p>
+  <ul>
+    <li><strong>(x₁, y₁):</strong> First data point.</li>
+    <li><strong>(x₂, y₂):</strong> Second data point.</li>
+    <li><strong>d:</strong> Distance between the points.</li>
+  </ul>
+
+  <h3>Step-by-Step Calculation</h3>
+  <p>Suppose the points are A = (2, 3) and B = (5, 7).</p>
+
+  <div class="formula">
+    d = √[(5 − 2)² + (7 − 3)²]<br><br>
+    d = √[3² + 4²]<br><br>
+    d = √25 = 5
+  </div>
+
+  <p>
+    The distance between A and B is 5 units. KNN calculates
+    distances like this to find the nearest neighbours.
+  </p>
+
+  <h3>Choosing K</h3>
+  <div class="formula">
+    Predicted class = Majority class among K nearest neighbours
+  </div>
+  <p>
+    A small K can be sensitive to noise. A larger K can smooth
+    predictions but may overlook local patterns. The best value
+    should be selected using validation data.
+  </p>
+</section>
+
+<section id="python">
+  <h2><span class="number">04.</span> Python Implementation</h2>
+  <p>
+    This example uses a small fruit dataset with two features:
+    weight in grams and sweetness on a scale of 1 to 10.
+  </p>
+
+  <h3>Short and Simple Python Code</h3>
+  <button class="copy-btn" onclick="copyPython()">Copy Python Code</button>
+
+  <pre class="codebox" id="pythonCode">import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
+
+# Fruit dataset: weight and sweetness
+data = pd.DataFrame({
+    "Weight": [150, 160, 170, 120, 130, 140],
+    "Sweetness": [7, 8, 7, 3, 4, 3],
+    "Fruit": ["Apple", "Apple", "Apple",
+              "Orange", "Orange", "Orange"]
+})
+
+X = data[["Weight", "Sweetness"]]
+y = data["Fruit"]
+
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X, y)
+
+new_fruit = [[155, 7]]
+print("Predicted fruit:", model.predict(new_fruit)[0])</pre>
+
+  <h3>Code Explanation</h3>
+  <table>
+    <tr><th>Code</th><th>Purpose</th></tr>
+    <tr><td><code>pd.DataFrame()</code></td><td>Creates the dataset.</td></tr>
+    <tr><td><code>KNeighborsClassifier()</code></td><td>Creates the KNN classification model.</td></tr>
+    <tr><td><code>n_neighbors=3</code></td><td>Uses the three nearest neighbours.</td></tr>
+    <tr><td><code>model.fit()</code></td><td>Stores the training examples for neighbour search.</td></tr>
+    <tr><td><code>model.predict()</code></td><td>Predicts the fruit category.</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>To run:</strong> Install the libraries using
+    <code>pip install pandas scikit-learn</code>. Run the code in
+    Google Colab, Jupyter Notebook or Python.
+  </div>
+
+  <p>
+    <strong>Important:</strong> This is a tiny illustrative dataset.
+    Real projects should use more data and evaluate performance on
+    separate test data. Because weight and sweetness have different
+    scales, feature scaling is often important when using KNN.
+  </p>
+</section>
+
+<section id="graphs">
+  <h2><span class="number">05.</span> Dataset, Graphs and Statistics</h2>
+
+  <h3>Sample Dataset</h3>
+  <table>
+    <tr><th>Fruit</th><th>Weight (g)</th><th>Sweetness</th></tr>
+    <tr><td>Apple</td><td>150</td><td>7</td></tr>
+    <tr><td>Apple</td><td>160</td><td>8</td></tr>
+    <tr><td>Apple</td><td>170</td><td>7</td></tr>
+    <tr><td>Orange</td><td>120</td><td>3</td></tr>
+    <tr><td>Orange</td><td>130</td><td>4</td></tr>
+    <tr><td>Orange</td><td>140</td><td>3</td></tr>
+  </table>
+
+  <h3>Illustrative Neighbour Diagram</h3>
+  <p>
+    The chart below illustrates two groups of fruits. The purple
+    diamond marks a hypothetical new fruit. KNN checks the distances
+    from that point to nearby training examples.
+  </p>
+
+  <svg class="graph" viewBox="0 0 600 365" role="img"
+       aria-label="Illustrative scatter plot of apple and orange examples and a new fruit">
+    <rect width="600" height="365" fill="white"/>
+
+    <g stroke="#e4dcf5" stroke-width="1">
+      <line x1="70" y1="50" x2="550" y2="50"/>
+      <line x1="70" y1="100" x2="550" y2="100"/>
+      <line x1="70" y1="150" x2="550" y2="150"/>
+      <line x1="70" y1="200" x2="550" y2="200"/>
+      <line x1="70" y1="250" x2="550" y2="250"/>
+      <line x1="150" y1="35" x2="150" y2="250"/>
+      <line x1="250" y1="35" x2="250" y2="250"/>
+      <line x1="350" y1="35" x2="350" y2="250"/>
+      <line x1="450" y1="35" x2="450" y2="250"/>
+    </g>
+
+    <g stroke="#39285f" stroke-width="2" fill="none">
+      <line x1="70" y1="35" x2="70" y2="250"/>
+      <line x1="70" y1="250" x2="550" y2="250"/>
+    </g>
+
+    <g fill="#9270d8" stroke="#7653bd" stroke-width="2">
+      <circle cx="365" cy="85" r="8"/>
+      <circle cx="390" cy="65" r="8"/>
+      <circle cx="415" cy="85" r="8"/>
+    </g>
+
+    <g fill="#d49b3e" stroke="#a8731b" stroke-width="2">
+      <circle cx="145" cy="195" r="8"/>
+      <circle cx="180" cy="175" r="8"/>
+      <circle cx="215" cy="195" r="8"/>
+    </g>
+
+    <g stroke="#9270d8" stroke-width="2" stroke-dasharray="5 4">
+      <line x1="365" y1="85" x2="390" y2="65"/>
+      <line x1="365" y1="85" x2="415" y2="85"/>
+    </g>
+
+    <path d="M377 90 L389 102 L377 114 L365 102 Z"
+          fill="#39285f" stroke="white" stroke-width="2"/>
+
+    <g fill="#514866" font-size="12">
+      <text x="43" y="54">10</text>
+      <text x="48" y="104">8</text>
+      <text x="48" y="154">6</text>
+      <text x="48" y="204">4</text>
+      <text x="48" y="254">2</text>
+      <text x="250" y="285">Weight / Feature 1 →</text>
+      <text x="12" y="20">Sweetness / Feature 2</text>
+      <text x="370" y="42" fill="#7653bd">Apple group</text>
+      <text x="115" y="160" fill="#a8731b">Orange group</text>
+      <text x="395" y="121" fill="#39285f">New fruit</text>
+    </g>
+
+    <g font-size="12" fill="#514866">
+      <circle cx="115" cy="325" r="6" fill="#9270d8"/>
+      <text x="128" y="329">Apple</text>
+      <circle cx="220" cy="325" r="6" fill="#d49b3e"/>
+      <text x="233" y="329">Orange</text>
+      <path d="M350 318 L357 325 L350 332 L343 325 Z" fill="#39285f"/>
+      <text x="365" y="329">New data point</text>
+    </g>
+  </svg>
+
+  <p>
+    This is a conceptual diagram, not the exact plot produced by
+    the Python dataset. In an actual KNN model, the result depends
+    on the feature values, distance metric and chosen K.
+  </p>
+
+  <h3>Important Statistics</h3>
+  <div class="metrics">
+    <div class="metric">
+      <strong>Accuracy</strong>
+      Percentage of evaluated predictions that are correct.
+    </div>
+    <div class="metric">
+      <strong>Precision</strong>
+      Measures how many predicted positive cases are truly positive.
+    </div>
+    <div class="metric">
+      <strong>Recall</strong>
+      Measures how many actual positive cases are correctly identified.
+    </div>
+    <div class="metric">
+      <strong>Confusion Matrix</strong>
+      Shows correct and incorrect predictions for each class.
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Interpretation:</strong> KNN makes predictions using nearby
+    examples rather than learning a single equation. Scaling features
+    and choosing K carefully can improve its results.
+  </div>
+</section>
+
+<section id="applications">
+  <h2><span class="number">06.</span> Real-World Applications</h2>
+
+  <h3>1. Healthcare</h3>
+  <p>Helps classify cases by comparing patient features with similar records.</p>
+
+  <h3>2. Recommendation Systems</h3>
+  <p>Finds similar users or items using their numerical features.</p>
+
+  <h3>3. Banking</h3>
+  <p>Can help classify transactions or customer profiles based on historical examples.</p>
+
+  <h3>4. Image Recognition</h3>
+  <p>Classifies images using numerical representations of their features.</p>
+
+  <h3>5. Agriculture</h3>
+  <p>Can help classify plants or fruit using measured characteristics.</p>
+
+  <div class="note">
+    KNN is simple to understand, but prediction can become slower
+    with very large datasets. It is also sensitive to irrelevant
+    features, feature scales and the choice of K.
+  </div>
+</section>
+
+<section id="conclusion">
+  <h2><span class="number">07.</span> Conclusion</h2>
+  <p>
+    K-Nearest Neighbours is a supervised machine learning algorithm
+    that predicts outcomes by examining the closest training examples.
+    It can be used for both classification and regression.
+  </p>
+  <p>
+    Its mathematical foundation is easy to understand, making it a
+    useful starting point for learning classification, distance
+    calculations and practical machine learning.
+  </p>
+
+  <h3>References</h3>
+  <ul>
+    <li>
+      <a href="https://scikit-learn.org/stable/modules/neighbors.html"
+         target="_blank" rel="noopener">Scikit-learn: Nearest Neighbours</a>
+    </li>
+    <li>
+      <a href="https://scikit-learn.org/stable/modules/model_evaluation.html"
+         target="_blank" rel="noopener">Scikit-learn: Model Evaluation</a>
+    </li>
+    <li>
+      <a href="https://pandas.pydata.org/docs/"
+         target="_blank" rel="noopener">Pandas Documentation</a>
+    </li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <strong>ML Learning Journal</strong>
+  <p>K-Nearest Neighbours | Machine Learning Study Blog</p>
+  <p>Educational project for classroom learning and presentation.</p>
+</footer>
+
+<script>
+function copyPython() {
+  const code = document.getElementById("pythonCode").innerText;
+
+  navigator.clipboard.writeText(code)
+    .then(() => alert("Python code copied!"))
+    .catch(() => alert("Please select and copy the Python code manually."));
+}
+</script>
+
+</body>
+</html>
